@@ -401,7 +401,7 @@ create_label(pnl, 'Wiener Parameter (K / NSR):', 405);
 edtK = create_edit(pnl, '0.01', 378);
 
 create_label(pnl, 'Inverse Min Threshold:', 345);
-edtThr = create_edit(pnl, '0.02', 318);
+edtThr = create_edit(pnl, '0.05', 318);
 
 create_label(pnl, 'Inverse Radius Cutoff (D0):', 285);
 edtRad = create_edit(pnl, '65', 258);
@@ -426,7 +426,7 @@ btnRun = create_primary_button(pnl, 'Jalankan Dekonvolusi', 200, @on_process);
             edtRad.String = '50';
         else
             edtK.String = '0.005';
-            edtThr.String = '0.01';
+            edtThr.String = '0.05';
             edtRad.String = '80';
         end
     end
@@ -457,10 +457,10 @@ btnRun = create_primary_button(pnl, 'Jalankan Dekonvolusi', 200, @on_process);
         rad = str2double(edtRad.String);
 
         set(btnRun, 'String', 'Mendekonvolusi...', 'Enable', 'off'); drawnow;
-        invOpts = struct('threshold', thr, 'radius', rad, 'convention', 'math');
+        invOpts = struct('threshold', thr, 'radius', rad, 'convention', 'image');
         [outInv, infoInv] = restore_motion_blur(state.img, L, theta, 'inverse', invOpts);
 
-        wnrOpts = struct('K', K, 'convention', 'math');
+        wnrOpts = struct('K', K, 'convention', 'image');
         [outWnr, ~] = restore_motion_blur(state.img, L, theta, 'wiener', wnrOpts);
         set(btnRun, 'String', 'Jalankan Dekonvolusi', 'Enable', 'on');
 
