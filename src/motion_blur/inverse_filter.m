@@ -15,7 +15,7 @@ end
 Hs(Hs == 0) = eps;
 Fhat = G ./ Hs;
 
-if isfinite(D0)
+if isfinite(D0) && D0 > 0
     [P, Q] = size(G);
     D = ifftshift(freq_distance(P, Q));
     Fhat = Fhat ./ (1 + (D / D0) .^ (2 * n));
