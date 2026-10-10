@@ -383,7 +383,25 @@ end
 %% ======================= TAB F: MOTION BLUR =======================
 function build_tab_motion(tab)
 state = struct('img', [], 'imgPath', '', 'ref', []);
-[pnl, axDeg, axPsf, axInv, axWnr, txtStatus] = create_standard_layout(tab, 'F. Restorasi Motion Blur');
+
+pnl = uipanel(tab, 'Title', '  F. Restorasi Motion Blur  ', ...
+    'Units', 'normalized', 'Position', [0.012 0.02 0.205 0.95], ...
+    'BackgroundColor', [1 1 1], 'ForegroundColor', [0.12 0.16 0.24], ...
+    'FontWeight', 'bold', 'FontSize', 10, 'FontName', 'Segoe UI', ...
+    'BorderType', 'line', 'HighlightColor', [0.86 0.89 0.93]);
+
+% 6-Axes Layout (3x2: Input & Frekuensi di atas, PSF & Restorasi di bawah)
+axDeg  = create_styled_axes(tab, [0.235 0.53 0.24 0.41]);
+axSpG  = create_styled_axes(tab, [0.490 0.53 0.24 0.41]);
+axSpH  = create_styled_axes(tab, [0.745 0.53 0.24 0.41]);
+axPsf  = create_styled_axes(tab, [0.235 0.07 0.24 0.41]);
+axInv  = create_styled_axes(tab, [0.490 0.07 0.24 0.41]);
+axWnr  = create_styled_axes(tab, [0.745 0.07 0.24 0.41]);
+
+txtStatus = uicontrol(pnl, 'Style', 'text', 'String', 'Status: Siap', ...
+    'Position', [12 12 205 36], ...
+    'BackgroundColor', [0.96 0.97 0.99], 'ForegroundColor', [0.35 0.42 0.52], ...
+    'FontSize', 8, 'FontName', 'Segoe UI', 'HorizontalAlignment', 'left');
 
 populate_presets(pnl, 'F_motion_blur_restoration', @on_preset_selected);
 uicontrol(pnl, 'Style', 'pushbutton', 'String', '+ Pilih Berkas Citra...', ...
@@ -444,7 +462,13 @@ btnRun = create_primary_button(pnl, 'Jalankan Dekonvolusi', 200, @on_process);
         state.img = read_image(path);
         state.ref = try_get_reference(path);
         render_viewport(axDeg, state.img, 'Citra Motion Blur (Input)');
-        clear_viewports({axPsf, axInv, axWnr});
+
+        G0 = complex(zeros(size(state.img, 1), size(state.img, 2), size(state.img, 3)));
+        for c = 1:size(state.img, 3)
+            G0(:, :, c) = fftshift(fft2(state.img(:, :, c)));
+        end
+        render_viewport(axSpG, log_spectrum(G0), 'Spektrum Masukan |G(u,v)|');
+        clear_viewports({axSpH, axPsf, axInv, axWnr});
         update_status(txtStatus, state.img, state.imgPath, ~isempty(state.ref));
     end
 
@@ -465,6 +489,8 @@ btnRun = create_primary_button(pnl, 'Jalankan Dekonvolusi', 200, @on_process);
         set(btnRun, 'String', 'Jalankan Dekonvolusi', 'Enable', 'on');
 
         render_viewport(axDeg, state.img, 'Citra Terdegradasi');
+        render_viewport(axSpG, log_spectrum(infoInv.G), 'Spektrum Masukan |G(u,v)|');
+        render_viewport(axSpH, log_spectrum(infoInv.H), 'Spektrum Degradasi |H(u,v)|');
         render_viewport(axPsf, rescale01(infoInv.psf), sprintf('PSF Motion (L=%g, Sudut=%g deg)', L, theta));
 
         invTitle = sprintf('Inverse Filter (thr=%g, D0=%g)', thr, rad);
